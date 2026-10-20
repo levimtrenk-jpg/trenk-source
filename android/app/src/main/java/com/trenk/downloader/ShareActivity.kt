@@ -5,7 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.trenk.downloader.ui.Bg
+import com.trenk.downloader.ui.ThemeMode
 import com.trenk.downloader.ui.Container
 import com.trenk.downloader.ui.Err
 import com.trenk.downloader.ui.GradientBorder
@@ -73,7 +74,7 @@ import com.trenk.downloader.ui.platformName
  * נפתח מ"שתף" באפליקציה אחרת (או מהמסך הראשי): חלון תחתון שקוף עם פרטי הסרטון והאיכויות.
  * לחיצה על איכות מתחילה הורדה ב-DownloadService וסוגרת את החלון.
  */
-class ShareActivity : ComponentActivity() {
+class ShareActivity : AppCompatActivity() {
     private val askPermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
 
     // הרשאת התראות (אנדרואיד 13+): מבקשים בהורדה הראשונה, אחרי הסבר קצר. בכל תשובה – ההורדה מתחילה.
@@ -91,6 +92,7 @@ class ShareActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        ThemeMode.sync(this)
         val url = Links.extractUrl(intent.getStringExtra(Intent.EXTRA_TEXT) ?: intent.dataString)
         requestPermissionsIfNeeded()
         setContent { TrenkTheme { ShareSheet(url, onClose = { finish() }) } }

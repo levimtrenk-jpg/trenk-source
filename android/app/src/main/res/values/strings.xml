@@ -86,6 +86,14 @@
     <string name="share_trenk">שתף את TRENK</string>
     <string name="share_trenk_sub">חברים יכולים להוריד מהדף</string>
     <string name="share_trenk_text">TRENK – מורידים סרטונים מיוטיוב, טיקטוק ואינסטגרם בשתי לחיצות. חינם ובלי פרסומות: %1$s</string>
+    <string name="theme">ערכת נושא</string>
+    <string name="theme_system">לפי המכשיר</string>
+    <string name="theme_light">בהיר</string>
+    <string name="theme_dark">כהה</string>
+    <string name="language">שפה</string>
+    <string name="lang_system">לפי המכשיר</string>
+    <string name="lang_he" translatable="false">עברית</string>
+    <string name="lang_en" translatable="false">English</string>
     <string name="privacy">מדיניות פרטיות</string>
     <string name="terms">תנאי שימוש</string>
     <string name="licenses">רישיונות וקרדיטים</string>

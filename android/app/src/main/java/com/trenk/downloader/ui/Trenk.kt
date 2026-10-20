@@ -1,6 +1,9 @@
 package com.trenk.downloader.ui
 
+import android.content.Context
+import android.content.res.Configuration
 import android.provider.Settings
+import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -13,8 +16,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -25,6 +33,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -39,18 +49,20 @@ import androidx.compose.ui.unit.sp
 import com.trenk.downloader.R
 
 // ---------- טוקנים (docs/DESIGN.md) ----------
-// פלטה כהה שנבנתה בפני עצמה (לא היפוך): משטחים מתבהרים ככל שהם "עולים"
-val Bg = Color(0xFF0E1015)
-val SurfaceLow = Color(0xFF151821)
-val Container = Color(0xFF1B1F2A)
-val SurfaceHigh = Color(0xFF232835)
-val Outline = Color(0xFF2E3442)
-val OnSurface = Color(0xFFE8EAF0)
-val OnSurfaceVar = Color(0xFFA1A7B8)
-val OnSurfaceMute = Color(0xFF757C8F)
-val Ok = Color(0xFF5BD08A)
-val Err = Color(0xFFFF7A7A)
-val ErrBg = Color(0xFF2A1A1F)
+// שתי פלטות שנבנו כל אחת בפני עצמה (לא היפוך). הכהה: משטחים מתבהרים ככל שהם "עולים".
+// הטוקנים הם getters שקוראים את ThemeMode (state), כך שהחלפת ערכה מציירת מחדש את כל המסכים מייד.
+private fun pick(dark: Long, light: Long) = Color(if (ThemeMode.isDark) dark else light)
+val Bg get() = pick(0xFF0E1015, 0xFFF5F6FA)
+val SurfaceLow get() = pick(0xFF151821, 0xFFFFFFFF)
+val Container get() = pick(0xFF1B1F2A, 0xFFFFFFFF)
+val SurfaceHigh get() = pick(0xFF232835, 0xFFECEEF4)
+val Outline get() = pick(0xFF2E3442, 0xFFDDE0E8)
+val OnSurface get() = pick(0xFFE8EAF0, 0xFF15171D)
+val OnSurfaceVar get() = pick(0xFFA1A7B8, 0xFF4E5567)
+val OnSurfaceMute get() = pick(0xFF757C8F, 0xFF7C8396)
+val Ok get() = pick(0xFF5BD08A, 0xFF1E9152)
+val Err get() = pick(0xFFFF7A7A, 0xFFD32F3A)
+val ErrBg get() = pick(0xFF2A1A1F, 0xFFFDE9EB)
 val TrenkOrange = Color(0xFFFFB84D)
 val TrenkPink = Color(0xFFFF5E8A)
 val TrenkPurple = Color(0xFF8B6CFF)
@@ -77,11 +89,48 @@ private val AppTypography = Typography().let { t ->
     )
 }
 
-/** ערכת עיצוב כהה, ממשק בעברית מימין לשמאל בלי קשר לשפת הטלפון */
+/** ערכת נושא: לפי המכשיר / בהיר / כהה. נשמרת ב-SharedPreferences ("app" → "theme"). */
+object ThemeMode {
+    const val SYSTEM = 0
+    const val LIGHT = 1
+    const val DARK = 2
+    var mode by mutableIntStateOf(SYSTEM)
+        private set
+    /** מצב הלילה של המכשיר. Activity נוצרת מחדש כשהוא משתנה, ולכן מספיק לעדכן ב-onCreate (sync) */
+    private var systemDark by mutableStateOf(true)
+    val isDark get() = when (mode) { LIGHT -> false; DARK -> true; else -> systemDark }
+
+    fun load(context: Context) {
+        mode = context.getSharedPreferences("app", Context.MODE_PRIVATE).getInt("theme", SYSTEM)
+    }
+
+    fun set(context: Context, value: Int) {
+        mode = value
+        context.getSharedPreferences("app", Context.MODE_PRIVATE).edit().putInt("theme", value).apply()
+    }
+
+    /** לקרוא ב-onCreate של כל Activity, לפני setContent: מצב הלילה של המכשיר */
+    fun sync(activity: ComponentActivity) {
+        systemDark = (activity.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+    }
+}
+
 @Composable
 fun TrenkTheme(content: @Composable () -> Unit) {
+    // סרגלי המערכת (שקופים, edge-to-edge): אייקונים כהים בערכה בהירה ולהפך
+    val view = LocalView.current
+    val dark = ThemeMode.isDark
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? android.app.Activity)?.window ?: return@SideEffect
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !dark
+                isAppearanceLightNavigationBars = !dark
+            }
+        }
+    }
     MaterialTheme(
-        colorScheme = darkColorScheme(
+        colorScheme = (if (dark) darkColorScheme() else lightColorScheme()).copy(
             primary = TrenkPink,
             secondary = TrenkPurple,
             tertiary = TrenkOrange,

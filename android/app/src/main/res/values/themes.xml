@@ -2,14 +2,14 @@
 <resources>
     <color name="trenk_bg">#FF111319</color>
 
-    <style name="Theme.Downloader" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.Downloader" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@color/trenk_bg</item>
         <item name="android:statusBarColor">@color/trenk_bg</item>
         <item name="android:navigationBarColor">@color/trenk_bg</item>
     </style>
 
     <!-- מסך השיתוף: שקוף לגמרי, רק ה-bottom sheet של Compose נראה -->
-    <style name="Theme.Downloader.Sheet" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.Downloader.Sheet" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>

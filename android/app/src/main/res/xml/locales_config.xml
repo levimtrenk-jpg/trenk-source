@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- שפות האפליקציה: עברית (res/values, ברירת מחדל) ואנגלית (res/values-en) -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="he" />
+    <locale android:name="en" />
+</locale-config>

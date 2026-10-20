@@ -79,6 +79,12 @@
     <string name="share_trenk">Share TRENK</string>
     <string name="share_trenk_sub">Friends can download it from the page</string>
     <string name="share_trenk_text">TRENK – download videos from YouTube, TikTok and Instagram in two taps. Free and ad-free: %1$s</string>
+    <string name="theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="language">Language</string>
+    <string name="lang_system">System</string>
     <string name="privacy">Privacy policy</string>
     <string name="terms">Terms of use</string>
     <string name="licenses">Licenses &amp; credits</string>

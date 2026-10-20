@@ -9,7 +9,9 @@ import android.os.Build
 import android.os.Bundle
 import android.text.format.DateUtils
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -76,6 +78,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.trenk.downloader.ui.Bg
+import com.trenk.downloader.ui.ThemeMode
 import com.trenk.downloader.ui.CircleIconButton
 import com.trenk.downloader.ui.Container
 import com.trenk.downloader.ui.Err
@@ -107,12 +110,13 @@ import java.util.Date
 import java.util.Locale
 
 /** מסך ראשי: הדבקה + פעולה ראשית אחת, הורדות פעילות, היסטוריה. הגדרות במסך נפרד. */
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     private val askPermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        ThemeMode.sync(this)
         // הרשאת התראות נשאלת בהורדה הראשונה (ShareActivity), עם הסבר
         val needed = buildList {
             if (Build.VERSION.SDK_INT <= 28) add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -619,6 +623,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            AppearanceCard()
             ShareTrenkCard()
             LegalCard(onLicenses)
 
@@ -626,6 +631,57 @@ class MainActivity : ComponentActivity() {
                 TrenkLabel(10f)
                 Spacer(Modifier.height(4.dp))
                 Text(stringResource(R.string.version_x, version), fontSize = 12.sp, color = OnSurfaceMute)
+            }
+        }
+    }
+
+    /** ערכת נושא (מוחלת מייד דרך ThemeMode) ושפה (AppCompat יוצר את המסכים מחדש ושומר את הבחירה) */
+    @Composable
+    private fun AppearanceCard() {
+        Card {
+            Text(stringResource(R.string.theme), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+            Spacer(Modifier.height(10.dp))
+            Choices(
+                listOf(stringResource(R.string.theme_system), stringResource(R.string.theme_light), stringResource(R.string.theme_dark)),
+                selected = ThemeMode.mode,
+            ) { ThemeMode.set(this@MainActivity, it) }
+            Spacer(Modifier.height(16.dp))
+            Text(stringResource(R.string.language), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+            Spacer(Modifier.height(10.dp))
+            val tags = listOf("", "he", "en")
+            val current = AppCompatDelegate.getApplicationLocales().get(0)?.language?.let { if (it == "iw") "he" else it } ?: ""
+            Choices(
+                listOf(stringResource(R.string.lang_system), stringResource(R.string.lang_he), stringResource(R.string.lang_en)),
+                selected = tags.indexOf(current).coerceAtLeast(0),
+            ) { i ->
+                AppCompatDelegate.setApplicationLocales(
+                    if (tags[i].isEmpty()) LocaleListCompat.getEmptyLocaleList() else LocaleListCompat.forLanguageTags(tags[i])
+                )
+            }
+        }
+    }
+
+    /** בורר מקטעים: אפשרות אחת נבחרת */
+    @Composable
+    private fun Choices(options: List<String>, selected: Int, onSelect: (Int) -> Unit) {
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(SurfaceHigh).padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            options.forEachIndexed { i, label ->
+                val on = i == selected
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .height(40.dp)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(if (on) Container else Color.Transparent)
+                        .then(if (on) Modifier.border(1.dp, Outline, RoundedCornerShape(9.dp)) else Modifier)
+                        .clickable(enabled = !on) { onSelect(i) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(label, fontSize = 13.sp, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal, color = if (on) OnSurface else OnSurfaceVar, maxLines = 1)
+                }
             }
         }
     }

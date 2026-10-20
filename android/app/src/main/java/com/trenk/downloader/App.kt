@@ -8,6 +8,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         Telemetry.init(this)
+        com.trenk.downloader.ui.ThemeMode.load(this)
         History.load(this)
         AppUpdate.loadCachedTip(this)
         createChannels()

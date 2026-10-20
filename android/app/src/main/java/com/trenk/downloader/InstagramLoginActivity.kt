@@ -7,13 +7,13 @@ import android.webkit.CookieManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 
 /**
  * התחברות לאינסטגרם בתוך WebView. אחרי שמופיעה עוגיית sessionid, העוגיות נשמרות
  * לקובץ בפורמט Netscape (cookies.txt) שמועבר ל-yt-dlp עם --cookies.
  */
-class InstagramLoginActivity : ComponentActivity() {
+class InstagramLoginActivity : AppCompatActivity() {
     private var saved = false
 
     @SuppressLint("SetJavaScriptEnabled")
