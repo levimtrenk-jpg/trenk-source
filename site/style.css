@@ -1,0 +1,88 @@
+:root {
+  --bg: #111319; --card: #1b1e27; --line: #2a2e3a; --fg: #f2f3f7; --muted: #a3a8b8;
+  --o: #ffb84d; --p: #ff5e8a; --v: #8b6cff;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, "Segoe UI", Arial, sans-serif; }
+main { max-width: 920px; margin: 0 auto; padding: 40px 16px 56px; }
+.trenk { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 700; letter-spacing: .35em; padding-left: .35em;
+  background: linear-gradient(90deg, var(--o), var(--p), var(--v)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+header { text-align: center; margin-bottom: 36px; }
+header .trenk { font-size: 13px; }
+h1 { margin: 6px 0 8px; font-size: clamp(28px, 6vw, 40px); }
+header p { margin: 0; color: var(--muted); }
+.ring { width: 72px; height: 72px; margin: 0 auto 14px; border-radius: 50%; padding: 3px;
+  background: conic-gradient(from var(--a, 0deg), var(--o), var(--p), var(--v), var(--o)); animation: spin 3s linear infinite; }
+.ring i { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: var(--bg); color: #fff; }
+@property --a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes spin { to { --a: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .ring { animation: none; } }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px; display: flex; flex-direction: column; }
+.card h2 { margin: 0 0 4px; font-size: 22px; }
+.card .sub { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
+.btn { display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; color: #fff; font-weight: 700;
+  padding: 14px 18px; border-radius: 14px; background: linear-gradient(90deg, var(--o), var(--p), var(--v)); }
+.btn:hover { filter: brightness(1.08); }
+.btn:focus-visible { outline: 3px solid var(--v); outline-offset: 3px; }
+.size { font-weight: 400; opacity: .85; font-size: 14px; }
+ol { margin: 18px 0 0; padding-inline-start: 22px; }
+li { margin-bottom: 8px; }
+li b { color: #fff; }
+.note { margin-top: auto; padding-top: 14px; color: var(--muted); font-size: 13px; }
+code { background: #0c0e13; border: 1px solid var(--line); padding: 1px 6px; border-radius: 6px; font-size: 13px; direction: ltr; unicode-bidi: isolate; }
+footer { margin-top: 32px; text-align: center; color: var(--muted); font-size: 13px; }
+#version { direction: ltr; unicode-bidi: isolate; }
+.jump { display: inline-block; margin-top: 18px; color: var(--fg); text-decoration: none; font-weight: 600; font-size: 15px;
+  padding: 10px 20px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); }
+.jump:hover { border-color: var(--v); }
+.how { margin-bottom: 40px; }
+.how h2, .dl-title { font-size: 24px; margin: 0 0 6px; text-align: center; }
+.how-sub { text-align: center; color: var(--muted); margin: 0 0 20px; }
+.steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.step { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px 20px 20px; margin: 0; }
+.step .num { position: absolute; top: 14px; left: 16px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 13px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--o), var(--p), var(--v)); }
+.step .emoji { font-size: 30px; display: block; margin-bottom: 8px; }
+.step h3 { margin: 0 0 6px; font-size: 18px; }
+.step p { margin: 0; color: var(--muted); font-size: 15px; }
+.step p b { color: var(--fg); }
+.tip { display: flex; gap: 12px; align-items: center; margin-top: 14px; padding: 14px 18px; border-radius: 16px;
+  background: linear-gradient(var(--card), var(--card)) padding-box, linear-gradient(90deg, var(--o), var(--p), var(--v)) border-box;
+  border: 1.5px solid transparent; }
+.tip .emoji { font-size: 24px; }
+.tip p { margin: 0; font-size: 15px; }
+.faq { margin-top: 18px; display: grid; gap: 8px; }
+.faq details { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 0 18px; }
+.faq summary { cursor: pointer; padding: 14px 0; font-weight: 600; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; color: var(--muted); font-size: 20px; font-weight: 400; transition: transform .2s ease-out; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq details p { margin: 0 0 14px; color: var(--muted); }
+.dl-title { margin-bottom: 16px; scroll-margin-top: 16px; }
+@media (prefers-reduced-motion: reduce) { .faq summary::after { transition: none; } }
+[hidden] { display: none !important; }
+.tipjar { margin-top: 32px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; padding: 22px; border-radius: 20px;
+  background: var(--card); border: 1px solid var(--line); }
+.tipjar .cup { font-size: 44px; line-height: 1; }
+.tipjar-text { flex: 1; min-width: 220px; }
+.tipjar h2 { margin: 0 0 4px; font-size: 20px; }
+.tipjar p { margin: 0; color: var(--muted); font-size: 15px; }
+.tip-btn { flex: none; padding: 12px 22px; }
+@media (max-width: 520px) { .tip-btn { width: 100%; } }
+/* מתג שפה, קישורי פוטר ודפים משפטיים */
+.lang { position: absolute; top: 14px; inset-inline-end: 16px; color: var(--muted); text-decoration: none; font-size: 14px;
+  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); }
+.lang:hover { color: var(--fg); border-color: var(--v); }
+body { position: relative; }
+footer nav { margin-top: 8px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+footer a { color: var(--muted); }
+footer a:hover { color: var(--fg); }
+.legal { max-width: 760px; }
+.legal h1 { font-size: clamp(26px, 5vw, 34px); }
+.legal h2 { font-size: 20px; margin: 28px 0 8px; }
+.legal p, .legal li { color: #d6d8e0; }
+.legal a { color: var(--o); }
+.legal .back { display: inline-block; margin-bottom: 18px; color: var(--muted); text-decoration: none; }
+.legal .updated { color: var(--muted); font-size: 14px; }
+[dir="ltr"] .step .num { left: auto; right: 16px; }

@@ -1,0 +1,25 @@
+# Python / מנוע
+__pycache__/
+*.pyc
+engine/logs/
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.iml
+.kotlin/
+
+# חתימה – לעולם לא בריפו
+*.jks
+*.keystore
+*.p12
+*.pfx
+keystore*.txt
+
+# מערכת
+.DS_Store
+Thumbs.db
+engine/instagram_cookies.txt

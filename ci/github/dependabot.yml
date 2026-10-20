@@ -1,0 +1,19 @@
+# עדכוני תלויות אוטומטיים (PR שבועי). אין gradle wrapper, אז Dependabot קורא את build.gradle.kts ישירות.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /android
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      androidx:
+        patterns: ["androidx.*", "org.jetbrains.kotlin*"]
+  - package-ecosystem: pip
+    directory: /engine
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>Universal Downloader</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="../icons/icon32.png" width="24" height="24" alt="">
+    <h1>Universal Downloader</h1>
+  </header>
+
+  <section class="status" id="status">
+    <span class="dot" id="dot"></span>
+    <div>
+      <div id="state" data-i18n="checkingEngineP"></div>
+      <div class="muted" id="versions"></div>
+    </div>
+  </section>
+
+  <div class="hint" id="hint" data-i18n="startHint" hidden></div>
+
+  <section class="field" id="dirBox" hidden>
+    <div class="label" data-i18n="targetFolder"></div>
+    <div class="dir" id="dir"></div>
+  </section>
+
+  <div class="actions" id="actions" hidden>
+    <button id="openBtn" data-i18n="openFolder"></button>
+  </div>
+  <div class="note" id="note"></div>
+
+  <!-- טיפ: מוסתר עד שיש קישור ב-version.json של דף ההורדה -->
+  <a class="tip" id="tip" href="#" target="_blank" rel="noopener" data-i18n="tip" hidden></a>
+
+  <nav class="links">
+    <a id="privacy" target="_blank" rel="noopener" data-i18n="privacy"></a>
+    <a id="terms" target="_blank" rel="noopener" data-i18n="terms"></a>
+    <a href="../legal/licenses.html" target="_blank" data-i18n="licenses"></a>
+    <a id="contact" target="_blank" rel="noopener" data-i18n="contact"></a>
+  </nav>
+
+  <footer class="muted">
+    <span><span data-i18n="extensionWord"></span> <span id="extVersion"></span></span>
+    <span class="id" id="extId" title="Extension ID"></span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

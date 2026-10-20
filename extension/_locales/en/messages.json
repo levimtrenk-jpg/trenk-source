@@ -1,0 +1,169 @@
+{
+  "lang": {
+    "message": "en"
+  },
+  "dir": {
+    "message": "ltr"
+  },
+  "extName": {
+    "message": "Universal Downloader"
+  },
+  "extDesc": {
+    "message": "A download button on YouTube, Shorts, TikTok and Instagram. The download itself runs in the local engine on your PC."
+  },
+  "noReply": {
+    "message": "No response from the extension"
+  },
+  "extUpdated": {
+    "message": "The extension was updated – refresh the page (F5)"
+  },
+  "buttonTitle": {
+    "message": "Download (Universal Downloader)"
+  },
+  "buttonLabel": {
+    "message": "Download"
+  },
+  "dialogLabel": {
+    "message": "Download video"
+  },
+  "close": {
+    "message": "Close"
+  },
+  "noVideoLink": {
+    "message": "No link found for this video."
+  },
+  "checkingEngine": {
+    "message": "Checking the engine..."
+  },
+  "loadingDetails": {
+    "message": "Loading details..."
+  },
+  "engineOff": {
+    "message": "The engine is off – start it"
+  },
+  "engineOffHint": {
+    "message": "Start \"Universal Downloader\" from the Start menu (or restart your PC), then click \"Try again\"."
+  },
+  "retry": {
+    "message": "Try again"
+  },
+  "untitled": {
+    "message": "Untitled"
+  },
+  "starting": {
+    "message": "Starting download..."
+  },
+  "downloading": {
+    "message": "Downloading..."
+  },
+  "done": {
+    "message": "✓ Download complete"
+  },
+  "openFolder": {
+    "message": "Open folder"
+  },
+  "downloadAgain": {
+    "message": "Download again"
+  },
+  "repairing": {
+    "message": "Fixing... one moment"
+  },
+  "failed": {
+    "message": "Download failed"
+  },
+  "queued": {
+    "message": "Queued..."
+  },
+  "processing": {
+    "message": "Merging and converting..."
+  },
+  "etaLeft": {
+    "message": "$TIME$ left",
+    "placeholders": {
+      "time": {
+        "content": "$1"
+      }
+    }
+  },
+  "notAllowed": {
+    "message": "The extension isn't allowed by the engine. Add the ID $ID$ to engine/config.json",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      }
+    }
+  },
+  "errorCode": {
+    "message": "Error $CODE$",
+    "placeholders": {
+      "code": {
+        "content": "$1"
+      }
+    }
+  },
+  "timeout": {
+    "message": "The engine didn't respond in time. Try again."
+  },
+  "engineNoReturn": {
+    "message": "The engine didn't come back after the update. Start it from the Start menu."
+  },
+  "igLogin": {
+    "message": "This content requires an Instagram login. Log in to Instagram in Chrome and try again."
+  },
+  "checkingEngineP": {
+    "message": "Checking the engine..."
+  },
+  "engineRunning": {
+    "message": "The engine is running"
+  },
+  "error": {
+    "message": "Error"
+  },
+  "autoUpdates": {
+    "message": "Updates itself · yt-dlp $V$",
+    "placeholders": {
+      "v": {
+        "content": "$1"
+      }
+    }
+  },
+  "startHint": {
+    "message": "Start \"Universal Downloader\" from the Start menu, or restart your PC."
+  },
+  "targetFolder": {
+    "message": "Download folder"
+  },
+  "tip": {
+    "message": "☕ Like it? Buy me a coffee"
+  },
+  "extensionWord": {
+    "message": "Extension"
+  },
+  "privacy": {
+    "message": "Privacy"
+  },
+  "terms": {
+    "message": "Terms"
+  },
+  "licenses": {
+    "message": "Licenses & credits"
+  },
+  "contact": {
+    "message": "Contact"
+  },
+  "siteBase": {
+    "message": "https://levimtrenk-jpg.github.io/trenk/en/"
+  },
+  "licensesIntro": {
+    "message": "Universal Downloader is built on open-source components."
+  },
+  "openSource": {
+    "message": "TRENK is open source under GPL-3.0"
+  },
+  "openSourceLink": {
+    "message": "Source code on GitHub"
+  },
+  "fullTexts": {
+    "message": "Full license texts"
+  }
+}

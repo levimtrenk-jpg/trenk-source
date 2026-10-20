@@ -1,0 +1,169 @@
+{
+  "lang": {
+    "message": "he"
+  },
+  "dir": {
+    "message": "rtl"
+  },
+  "extName": {
+    "message": "Universal Downloader"
+  },
+  "extDesc": {
+    "message": "כפתור הורדה ביוטיוב, Shorts, טיקטוק ואינסטגרם. ההורדה עצמה רצה במנוע המקומי במחשב."
+  },
+  "noReply": {
+    "message": "אין תשובה מהתוסף"
+  },
+  "extUpdated": {
+    "message": "התוסף עודכן – רענן את הדף (F5)"
+  },
+  "buttonTitle": {
+    "message": "הורדה (Universal Downloader)"
+  },
+  "buttonLabel": {
+    "message": "הורדה"
+  },
+  "dialogLabel": {
+    "message": "הורדת סרטון"
+  },
+  "close": {
+    "message": "סגור"
+  },
+  "noVideoLink": {
+    "message": "לא נמצא קישור לסרטון הזה."
+  },
+  "checkingEngine": {
+    "message": "בודק את המנוע..."
+  },
+  "loadingDetails": {
+    "message": "טוען פרטים..."
+  },
+  "engineOff": {
+    "message": "המנוע כבוי – הפעל אותו"
+  },
+  "engineOffHint": {
+    "message": "הפעל את \"Universal Downloader\" מתפריט התחל (או הפעל מחדש את המחשב), ואז לחץ \"נסה שוב\"."
+  },
+  "retry": {
+    "message": "נסה שוב"
+  },
+  "untitled": {
+    "message": "ללא כותרת"
+  },
+  "starting": {
+    "message": "מתחיל הורדה..."
+  },
+  "downloading": {
+    "message": "מוריד..."
+  },
+  "done": {
+    "message": "✓ ההורדה הושלמה"
+  },
+  "openFolder": {
+    "message": "פתח תיקייה"
+  },
+  "downloadAgain": {
+    "message": "הורד שוב"
+  },
+  "repairing": {
+    "message": "מתקן... רגע"
+  },
+  "failed": {
+    "message": "ההורדה נכשלה"
+  },
+  "queued": {
+    "message": "ממתין בתור..."
+  },
+  "processing": {
+    "message": "ממזג וממיר..."
+  },
+  "etaLeft": {
+    "message": "נשארו $TIME$",
+    "placeholders": {
+      "time": {
+        "content": "$1"
+      }
+    }
+  },
+  "notAllowed": {
+    "message": "התוסף לא מורשה במנוע. הוסף את ה-ID ‏$ID$ ל-engine/config.json",
+    "placeholders": {
+      "id": {
+        "content": "$1"
+      }
+    }
+  },
+  "errorCode": {
+    "message": "שגיאה $CODE$",
+    "placeholders": {
+      "code": {
+        "content": "$1"
+      }
+    }
+  },
+  "timeout": {
+    "message": "המנוע לא ענה בזמן. נסה שוב."
+  },
+  "engineNoReturn": {
+    "message": "המנוע לא חזר אחרי העדכון. הפעל אותו מתפריט התחל."
+  },
+  "igLogin": {
+    "message": "התוכן הזה דורש התחברות לאינסטגרם. היכנס לאינסטגרם בכרום ונסה שוב."
+  },
+  "checkingEngineP": {
+    "message": "בודק את המנוע..."
+  },
+  "engineRunning": {
+    "message": "המנוע פועל"
+  },
+  "error": {
+    "message": "שגיאה"
+  },
+  "autoUpdates": {
+    "message": "מתעדכן לבד · yt-dlp $V$",
+    "placeholders": {
+      "v": {
+        "content": "$1"
+      }
+    }
+  },
+  "startHint": {
+    "message": "הפעל את \"Universal Downloader\" מתפריט התחל, או הפעל מחדש את המחשב."
+  },
+  "targetFolder": {
+    "message": "תיקיית יעד"
+  },
+  "tip": {
+    "message": "☕ אהבת? קנה לי קפה"
+  },
+  "extensionWord": {
+    "message": "תוסף"
+  },
+  "privacy": {
+    "message": "פרטיות"
+  },
+  "terms": {
+    "message": "תנאי שימוש"
+  },
+  "licenses": {
+    "message": "רישיונות וקרדיטים"
+  },
+  "contact": {
+    "message": "יצירת קשר"
+  },
+  "siteBase": {
+    "message": "https://levimtrenk-jpg.github.io/trenk/"
+  },
+  "licensesIntro": {
+    "message": "Universal Downloader בנוי על רכיבי קוד פתוח. הנוסח המחייב של כל רישיון הוא באנגלית."
+  },
+  "openSource": {
+    "message": "TRENK הוא קוד פתוח תחת GPL-3.0"
+  },
+  "openSourceLink": {
+    "message": "לקוד המקור ב-GitHub"
+  },
+  "fullTexts": {
+    "message": "הנוסח המלא של הרישיונות"
+  }
+}

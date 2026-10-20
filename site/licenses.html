@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>רישיונות וקרדיטים – TRENK</title>
+<meta name="description" content="רכיבי הקוד הפתוח ש-TRENK משתמש בהם, הרישיונות שלהם וקישורים לקוד המקור.">
+<link rel="canonical" href="https://levimtrenk-jpg.github.io/trenk/licenses.html">
+<meta name="theme-color" content="#111319">
+<link rel="stylesheet" href="style.css">
+<style>
+  #notices { direction: ltr; text-align: left; }
+  #notices p { white-space: pre-wrap; }
+  #notices h2 { font-size: 22px; } #notices h3 { font-size: 17px; margin: 22px 0 4px; }
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 0 14px; margin: 6px 0; }
+  summary { cursor: pointer; padding: 10px 0; font-weight: 600; direction: ltr; text-align: left; }
+  .oss { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+  pre { white-space: pre-wrap; font-size: 12px; direction: ltr; text-align: left; color: var(--muted); }
+</style>
+</head>
+<body>
+<a class="lang" href="en/licenses.html" hreflang="en" lang="en">English</a>
+<main class="legal">
+  <a class="back" href="./">→ חזרה לדף הראשי</a>
+  <div class="trenk">TRENK</div>
+  <h1>רישיונות וקרדיטים</h1>
+  <p>TRENK בנוי על רכיבי קוד פתוח – תודה לכל מי שכתב אותם! לכל רכיב רישיון משלו. הרשימה והנוסחים המחייבים הם באנגלית.</p>
+  <p class="oss"><b>TRENK הוא קוד פתוח תחת GPL-3.0</b> · <a href="https://github.com/levimtrenk-jpg/trenk-source" rel="noopener">לקוד המקור ב-GitHub</a></p>
+  <article id="notices"></article>
+  <h2>הנוסח המלא של הרישיונות</h2>
+  <div id="files"></div>
+</main>
+<script>
+  const base = "legal/";
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/(https?:\/\/[^\s)<]+)/g, '<a href="$1" rel="noopener">$1</a>');
+  fetch(base + "THIRD_PARTY_NOTICES.md").then((r) => r.text()).then((md) => {
+    document.getElementById("notices").innerHTML = md.split(/\n\s*\n/).map((b) => {
+      const m = b.match(/^(#+)\s+(.*)/);
+      if (!m) return "<p>" + inline(b.trim()) + "</p>";
+      const h = Math.min(m[1].length + 1, 4);
+      return "<h" + h + ">" + inline(m[2]) + "</h" + h + ">";
+    }).join("");
+  });
+  fetch(base + "index.json").then((r) => r.json()).then((files) => {
+    for (const f of files) {
+      const d = document.createElement("details");
+      d.innerHTML = "<summary>" + esc(f.replace(/\.txt$/, "")) + "</summary><pre></pre>";
+      d.addEventListener("toggle", () => fetch(base + "licenses/" + f).then((r) => r.text()).then((x) => (d.querySelector("pre").textContent = x)), { once: true });
+      document.getElementById("files").appendChild(d);
+    }
+  });
+</script>
+</body>
+</html>

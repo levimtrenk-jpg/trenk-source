@@ -1,0 +1,174 @@
+name: Android APK
+
+# בכל push ל-main: בונה APK חתום (arm64-v8a) ומפרסם אותו כ-GitHub Release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # רץ רק בריפו הפרטי. בריפו הציבורי trenk-source (עותק מסונן של הקוד) אין Secrets, אז שם הוא מדולג.
+    if: github.repository == 'levimtrenk-jpg/universal-downloader'
+    runs-on: ubuntu-latest
+    env:
+      VERSION_CODE: ${{ github.run_number }}
+      VERSION_NAME: 1.0.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # הערכים הפרטיים (מייל יצירת קשר, topic של ntfy, DSN של Sentry) מגיעים מ-Secrets.
+      # בריפו הציבורי config/ מכיל רק ערכים לדוגמה (tools/export_public.py).
+      - name: Apply private config from Secrets
+        env:
+          CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        run: |
+          set_json() { if [ -n "$3" ]; then jq --arg v "$3" ".$2 = \$v" "$1" > "$1.tmp" && mv "$1.tmp" "$1"; fi; }
+          set_json config/site.json contact_email "$CONTACT_EMAIL"
+          set_json config/site.json sentry_dsn "$SENTRY_DSN"
+          set_json config/stats.json ntfy_topic "$NTFY_TOPIC"
+          if grep -q 'example.com\|your-ntfy-topic' config/site.json config/stats.json; then echo "::error::Missing secrets CONTACT_EMAIL / NTFY_TOPIC"; exit 1; fi
+
+      # הקוד יוצא לריפו הציבורי trenk-source (GPL-3.0) בסוף הריצה. מייצאים וסורקים כבר עכשיו,
+      # כדי שמפתח או מידע אישי יעצרו את ה-Release לפני שמשהו מתפרסם.
+      - name: Export and scan public source
+        env:
+          DEPLOY_KEY: ${{ secrets.SOURCE_DEPLOY_KEY }}
+          # שמות ושם משתמש לסריקה (לא כתובים בקוד הציבורי)
+          SCAN_PRIVATE_TERMS: ${{ secrets.SCAN_PRIVATE_TERMS }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/source_key && chmod 600 ~/.ssh/source_key
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/source_key -o IdentitiesOnly=yes" git clone -q --depth 1 git@github.com:levimtrenk-jpg/trenk-source.git "$RUNNER_TEMP/source"
+          python3 tools/export_public.py "$RUNNER_TEMP/source"
+          docker run --rm -v "$RUNNER_TEMP/source:/repo" ghcr.io/gitleaks/gitleaks:v8.21.2 detect --no-git --source /repo --redact --no-banner -v
+
+      # הרישיונות באפליקציה/בתוסף/באתר הם עותקים של THIRD_PARTY_NOTICES.md + legal/licenses
+      - name: Check legal files are in sync
+        run: python3 tools/sync_legal.py --check
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # בלי gradle wrapper בריפו: מתקינים גרסה קבועה של Gradle
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.11.1"
+
+      - name: Decode keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then echo "::error::Missing secret KEYSTORE_BASE64"; exit 1; fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.p12"
+          echo "KEYSTORE_PATH=$RUNNER_TEMP/release.p12" >> "$GITHUB_ENV"
+
+      - name: Build signed APK
+        working-directory: android
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: gradle :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Verify signature and rename
+        run: |
+          APK=android/app/build/outputs/apk/release/app-arm64-v8a-release.apk
+          ls -la android/app/build/outputs/apk/release/
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs "$APK" | tee certs.txt
+          # כל הגרסאות חייבות להיחתם באותה תעודה, אחרת האפליקציה לא תתעדכן מעל הקיימת
+          EXPECTED="a3941ca8a3986bb56d6e72ebf29e2106fc09d613be3d3d35c0d60b46e0946703"
+          grep -q "SHA-256 digest: $EXPECTED" certs.txt || { echo "::error::APK signed with a different certificate (expected $EXPECTED)"; exit 1; }
+          OUT="UniversalDownloader-${VERSION_NAME}-arm64.apk"
+          cp "$APK" "$OUT"
+          echo "APK_FILE=$OUT" >> "$GITHUB_ENV"
+
+      # חבילה למחשב: מנוע + תוסף + Install.bat אחד, בתוך תיקייה UniversalDownloader
+      - name: Package Windows ZIP
+        run: |
+          mkdir -p pkg/UniversalDownloader
+          cp -r engine extension pkg/UniversalDownloader/
+          rm -rf pkg/UniversalDownloader/engine/logs pkg/UniversalDownloader/engine/__pycache__
+          cp packaging/windows/Install.bat pkg/UniversalDownloader/
+          file pkg/UniversalDownloader/Install.bat pkg/UniversalDownloader/engine/install.bat
+          (cd pkg && zip -qr ../UniversalDownloader-Windows.zip UniversalDownloader)
+          ls -la UniversalDownloader-Windows.zip
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Re-run של אותה ריצה מקבל אותו מספר גרסה: מחליפים את הקבצים במקום להיכשל על tag קיים
+          if gh release view "v${VERSION_NAME}" > /dev/null 2>&1; then
+            gh release upload "v${VERSION_NAME}" "$APK_FILE" UniversalDownloader-Windows.zip --clobber
+          else
+            gh release create "v${VERSION_NAME}" "$APK_FILE" UniversalDownloader-Windows.zip \
+              --title "Universal Downloader ${VERSION_NAME}" \
+              --notes "APK חתום ל-arm64-v8a + חבילה למחשב. נבנה מ-${GITHUB_SHA::7}." \
+              --latest
+          fi
+
+      # דף ההורדה הציבורי (levimtrenk-jpg.github.io/trenk): הריפו הציבורי מכיל רק את הדף והקבצים האחרונים.
+      # push --force של ענף יתום, כדי שהריפו לא יתנפח מכל גרסה. הכתיבה עם deploy key שמורשה רק לריפו הזה.
+      - name: Publish public download page
+        env:
+          DEPLOY_KEY: ${{ secrets.PAGES_DEPLOY_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/pages_key && chmod 600 ~/.ssh/pages_key
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          mkdir site-out
+          cp -r site/. site-out/
+          cp "$APK_FILE" site-out/UniversalDownloader.apk
+          cp UniversalDownloader-Windows.zip site-out/
+          # האפליקציה מתקינה עדכון רק אם ה-sha256 של הקובץ שירד תואם לזה
+          APK_SHA=$(sha256sum site-out/UniversalDownloader.apk | cut -d' ' -f1)
+          echo "APK sha256: $APK_SHA"
+          # כתובת יצירת קשר (config/site.json) בדפים
+          CONTACT=$(jq -r '.contact_email' config/site.json)
+          grep -rl '{{CONTACT_EMAIL}}' site-out --include='*.html' | xargs -r sed -i "s|{{CONTACT_EMAIL}}|$CONTACT|g"
+          if grep -rl '{{CONTACT_EMAIL}}' site-out --include='*.html'; then echo "::error::placeholder left"; exit 1; fi
+          # האפליקציה, האתר והתוסף קוראים את הקובץ הזה: עדכון (code = versionCode, sha256), קישור הטיפ (config/tip.json),
+          # topic של ntfy שהאתר שולח אליו הורדות (config/stats.json) וכתובת יצירת קשר (config/site.json)
+          jq -n --arg v "$VERSION_NAME" --argjson c "$VERSION_CODE" --arg d "$(date -u +%Y-%m-%d)" \
+            --arg tip "$(jq -r '.url // ""' config/tip.json)" \
+            --arg ntfy "$(jq -r '.ntfy_topic // ""' config/stats.json)" \
+            --arg sha "$APK_SHA" --arg contact "$CONTACT" \
+            '{version: $v, code: $c, date: $d, apk: "https://levimtrenk-jpg.github.io/trenk/UniversalDownloader.apk", sha256: $sha, tip: $tip, ntfy: $ntfy, contact: $contact}' \
+            > site-out/version.json
+          cat site-out/version.json
+          printf '# Universal Downloader\n\nדף ההורדה: https://levimtrenk-jpg.github.io/trenk/\n' > site-out/README.md
+          touch site-out/.nojekyll
+          cd site-out
+          git init -q -b main
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Release ${VERSION_NAME}"
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/pages_key -o IdentitiesOnly=yes" git push --force git@github.com:levimtrenk-jpg/trenk.git main
+
+      # הריפו הציבורי: commit לכל גרסה + tag זהה (v1.0.N). deploy key שמורשה רק ל-trenk-source.
+      - name: Publish public source (trenk-source)
+        working-directory: ${{ runner.temp }}/source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -q -m "TRENK ${VERSION_NAME}"
+          git tag -f "v${VERSION_NAME}"
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/source_key -o IdentitiesOnly=yes"
+          git push -q origin HEAD:main
+          git push -q --force origin "v${VERSION_NAME}"

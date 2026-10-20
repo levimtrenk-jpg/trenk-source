@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- עברית = ברירת המחדל. מכשיר באנגלית מקבל את values-en. -->
+<resources>
+    <bool name="rtl">true</bool>
+    <string name="app_name" translatable="false">Universal Downloader</string>
+    <string name="site_url" translatable="false">https://levimtrenk-jpg.github.io/trenk/</string>
+    <string name="share_label">הורדה עם TRENK</string>
+    <string name="channel_progress">הורדות פעילות</string>
+    <string name="channel_done">הורדות שהסתיימו</string>
+
+    <!-- כללי -->
+    <string name="video">וידאו</string>
+    <string name="audio">אודיו</string>
+    <string name="retry">נסה שוב</string>
+    <string name="close">סגור</string>
+    <string name="back">חזרה</string>
+    <string name="open">פתח</string>
+    <string name="not_now">לא עכשיו</string>
+    <string name="settings">הגדרות</string>
+    <string name="share">שתף</string>
+    <string name="download">הורד</string>
+    <string name="failed">נכשל</string>
+    <string name="recommended">מומלץ</string>
+    <string name="untitled">ללא כותרת</string>
+    <string name="version_x">גרסה %1$s</string>
+    <string name="repairing">מתקן... רגע</string>
+
+    <!-- מסך ראשי -->
+    <string name="toast_no_link">לא נמצא קישור של יוטיוב, טיקטוק או אינסטגרם</string>
+    <string name="toast_cant_open">הקובץ נמחק, או שאין אפליקציה שפותחת אותו</string>
+    <string name="downloading_now">מוריד עכשיו</string>
+    <string name="history">היסטוריה</string>
+    <string name="filter_all">הכל</string>
+    <string name="engine_preparing_short">מכין…</string>
+    <string name="engine_ready_short">מוכן</string>
+    <string name="engine_error_short">שגיאה</string>
+    <string name="paste_link">הדבק קישור…</string>
+    <string name="clipboard_found">נמצא קישור בלוח</string>
+    <string name="cancel_download">בטל הורדה</string>
+    <string name="queued">ממתין בתור</string>
+    <string name="today_at">היום %1$s</string>
+    <string name="yesterday_at">אתמול %1$s</string>
+    <string name="empty_title">עוד לא הורדת כלום</string>
+    <string name="empty_body">ביוטיוב, טיקטוק או אינסטגרם: שתף ← \"הורדה עם TRENK\", או הדבק קישור למעלה.</string>
+
+    <!-- עדכון אפליקציה -->
+    <string name="update_available">גרסה חדשה זמינה</string>
+    <string name="update_new_installed">חדשה: %1$s · מותקנת: %2$s</string>
+    <string name="install">התקן</string>
+    <string name="update_app">עדכן אפליקציה</string>
+    <string name="update_unknown_sources_hint">אם אנדרואיד ביקש אישור \"התקנה ממקור לא ידוע\" – אשר וחזור ללחוץ \"התקן\". ההיסטוריה וההגדרות נשמרות.</string>
+    <string name="app_update_title">עדכון אפליקציה</string>
+    <string name="installed_version">מותקנת: גרסה %1$s</string>
+    <string name="version_available">גרסה %1$s זמינה</string>
+    <string name="downloading_version">מוריד גרסה %1$s… %2$d%%</string>
+    <string name="checking">בודק…</string>
+    <string name="check_updates">בדוק עדכונים</string>
+    <string name="up_to_date">יש לך את הגרסה האחרונה ✓ (%1$s)</string>
+    <string name="update_check_failed">אין חיבור לאינטרנט, או שהשרת לא ענה</string>
+    <string name="update_download_failed">ההורדה נכשלה. בדוק את החיבור ונסה שוב.</string>
+    <string name="update_hash_mismatch">הקובץ שירד לא תואם לגרסה הרשמית, ולכן לא הותקן. נסה שוב מאוחר יותר.</string>
+
+    <!-- טיפ -->
+    <string name="tip_prompt_title">אהבת את TRENK?</string>
+    <string name="tip_prompt_body">הכלי חינמי ונשאר חינמי. אם בא לך להגיד תודה – אפשר לקנות לי קפה.</string>
+    <string name="buy_coffee">קנה לי קפה</string>
+    <string name="tip_card_title">אהבת? קנה לי קפה</string>
+    <string name="tip_card_body">טיפ אופציונלי – הכלי נשאר חינמי</string>
+
+    <!-- הגדרות -->
+    <string name="engine_title">מנוע ההורדה</string>
+    <string name="engine_preparing">מכין… (בפעם הראשונה כמה שניות)</string>
+    <string name="engine_ready">מוכן · גרסת yt-dlp %1$s</string>
+    <string name="engine_error">שגיאה: %1$s</string>
+    <string name="engine_auto">מתעדכן לבד. אם הורדה נכשלת, המנוע מתקן את עצמו ומנסה שוב.</string>
+    <string name="instagram">אינסטגרם</string>
+    <string name="ig_connected">מחובר ✓</string>
+    <string name="ig_not_connected">לא מחובר · נדרש לסטוריז</string>
+    <string name="instagram_connected">מחובר לאינסטגרם ✓</string>
+    <string name="logout">התנתק</string>
+    <string name="login">התחבר</string>
+    <string name="where_saved">איפה נשמר</string>
+    <string name="history_cleared">ההיסטוריה נוקתה</string>
+    <string name="clear_history">נקה היסטוריה</string>
+    <string name="files_stay">הקבצים עצמם נשארים</string>
+    <string name="share_trenk">שתף את TRENK</string>
+    <string name="share_trenk_sub">חברים יכולים להוריד מהדף</string>
+    <string name="share_trenk_text">TRENK – מורידים סרטונים מיוטיוב, טיקטוק ואינסטגרם בשתי לחיצות. חינם ובלי פרסומות: %1$s</string>
+    <string name="privacy">מדיניות פרטיות</string>
+    <string name="terms">תנאי שימוש</string>
+    <string name="licenses">רישיונות וקרדיטים</string>
+    <string name="contact">יצירת קשר וזכויות יוצרים</string>
+    <string name="licenses_intro">TRENK בנוי על רכיבי קוד פתוח. תודה לכל מי שכתב אותם! הנוסח המחייב של כל רישיון הוא באנגלית.</string>
+    <string name="open_source">TRENK הוא קוד פתוח תחת GPL-3.0</string>
+    <string name="open_source_link">לקוד המקור ב-GitHub</string>
+    <string name="source_url" translatable="false">https://github.com/levimtrenk-jpg/trenk-source</string>
+    <string name="licenses_full_texts">הנוסח המלא של הרישיונות</string>
+
+    <!-- הורדה -->
+    <string name="dl_starting">מתחיל הורדה...</string>
+    <string name="dl_downloading">מוריד...</string>
+    <string name="dl_saving">שומר...</string>
+    <string name="dl_canceled">בוטל</string>
+    <string name="dl_eta">נשארו %1$s</string>
+    <string name="dl_saved">נשמר ✓</string>
+    <string name="dl_failed">ההורדה נכשלה</string>
+
+    <!-- חלון השיתוף -->
+    <string name="share_no_link">לא נמצא קישור של יוטיוב, טיקטוק או אינסטגרם בטקסט ששותף.</string>
+    <string name="share_preparing">מכין את המנוע – רק בפעם הראשונה, כמה שניות…</string>
+    <string name="share_loading">טוען פרטים…</string>
+    <string name="share_load_failed">לא הצלחתי לטעון את הסרטון</string>
+    <string name="share_pick_hint">לחיצה על איכות מתחילה הורדה · נשמר בגלריה</string>
+    <string name="notif_title">לאשר התראות?</string>
+    <string name="notif_body">כך תראה את התקדמות ההורדה ותדע כשהקובץ נשמר. אנחנו לא שולחים פרסומות.</string>
+    <string name="notif_allow">אישור</string>
+
+    <!-- שגיאות -->
+    <string name="err_interrupted">ההורדה נקטעה</string>
+    <string name="err_unknown">שגיאה לא ידועה</string>
+    <string name="err_unsupported">הקישור לא נתמך</string>
+    <string name="err_instagram_login">אינסטגרם דורש התחברות לתוכן הזה. התחבר לאינסטגרם בהגדרות ונסה שוב.</string>
+    <string name="err_private">התוכן פרטי ואי אפשר להוריד אותו.</string>
+    <string name="err_no_internet">אין חיבור לאינטרנט</string>
+    <string name="err_unavailable">הסרטון הוסר או לא זמין.</string>
+    <string name="err_generic">לא הצלחנו להוריד את הסרטון הזה, גם אחרי תיקון אוטומטי. נסה שוב מאוחר יותר או סרטון אחר.</string>
+
+    <!-- מסך פתיחה -->
+    <string name="onb_skip">דלג</string>
+    <string name="onb_next">הבא</string>
+    <string name="onb_start">יאללה, מתחילים</string>
+    <string name="onb_share_word">שתף</string>
+    <string name="onb1_title">ראית סרטון? שתף אותו</string>
+    <string name="onb1_body">ביוטיוב, טיקטוק או אינסטגרם – לוחצים על \"שתף\" מתחת לסרטון.</string>
+    <string name="onb2_title">בוחרים TRENK</string>
+    <string name="onb2_body">בחלון השיתוף לוחצים על \"הורדה עם TRENK\". לא צריך להעתיק קישורים.</string>
+    <string name="onb_pin_tip">טיפ: לחיצה ארוכה על TRENK בחלון השיתוף ← \"הצמד\", וכך הוא תמיד יופיע ראשון.</string>
+    <string name="onb3_title">בוחרים איכות – וזהו</string>
+    <string name="onb3_body">וידאו עד 4K או MP3. הקובץ נשמר בגלריה, וההתקדמות מופיעה בהתראה.</string>
+</resources>
