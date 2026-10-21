@@ -32,6 +32,9 @@ data class Probe(
     val options: List<FormatOption>,
 )
 
+/** סרטון בפלייליסט (מרשימה שטוחה: בלי איכויות) */
+data class PlaylistEntry(val id: String, val title: String, val url: String, val duration: Int, val thumbnail: String?)
+
 sealed interface EngineState {
     data object Initializing : EngineState
     data class Ready(val version: String?) : EngineState
@@ -99,6 +102,48 @@ object Engine {
         )
     }
 
+    /** קישור לפלייליסט עצמו (youtube.com/playlist?list=...). קישור לסרטון בודד נשאר סרטון בודד. */
+    fun isPlaylist(url: String): Boolean {
+        val uri = android.net.Uri.parse(url)
+        val host = uri.host?.lowercase() ?: return false
+        return (host == "youtube.com" || host.endsWith(".youtube.com")) &&
+            uri.path?.startsWith("/playlist") == true && !uri.getQueryParameter("list").isNullOrBlank()
+    }
+
+    /** רשימת הסרטונים בפלייליסט (עד 200), בלי לשלוף איכויות לכל סרטון */
+    suspend fun probePlaylist(context: Context, url: String, onRepair: () -> Unit = {}): List<PlaylistEntry> = withContext(Dispatchers.IO) {
+        val platform = Links.platformOf(url) ?: throw IllegalArgumentException(context.getString(R.string.err_unsupported))
+        awaitReady()
+        val out = try {
+            withRepair(context, platform, onRepair) {
+                val req = YoutubeDLRequest(url)
+                req.addOption("--flat-playlist")
+                req.addOption("--dump-json")
+                req.addOption("--yes-playlist")
+                req.addOption("--playlist-end", "200")
+                YoutubeDL.getInstance().execute(req).out
+            }
+        } catch (e: Exception) {
+            Telemetry.downloadError("probe", platform, e)
+            throw RuntimeException(friendlyError(context, e.message, platform), e)
+        }
+        out.lineSequence().map { it.trim() }.filter { it.startsWith("{") }.mapNotNull { line ->
+            runCatching {
+                val j = org.json.JSONObject(line)
+                val id = j.optString("id")
+                val link = j.optString("url").takeIf { it.startsWith("http") } ?: "https://www.youtube.com/watch?v=$id"
+                val thumbs = j.optJSONArray("thumbnails")
+                PlaylistEntry(
+                    id = id,
+                    title = j.optString("title").ifBlank { link },
+                    url = link,
+                    duration = j.optDouble("duration", 0.0).toInt(),
+                    thumbnail = thumbs?.optJSONObject(thumbs.length() - 1)?.optString("url"),
+                )
+            }.getOrNull()
+        }.toList()
+    }
+
     private fun buildOptions(info: VideoInfo): List<FormatOption> {
         val formats = info.formats.orEmpty()
         val audioOnly = formats.filter { it.vcodec == "none" && it.acodec != null && it.acodec != "none" }
@@ -127,10 +172,17 @@ object Engine {
     }
 
     /** בקשת הורדה לתיקייה זמנית. השם הסופי ניתן אחר כך ב-MediaStore. */
-    fun downloadRequest(context: Context, url: String, formatId: String, outDir: File, name: String): YoutubeDLRequest {
+    fun downloadRequest(
+        context: Context, url: String, formatId: String, outDir: File, name: String,
+        startSec: Int = -1, endSec: Int = -1,
+    ): YoutubeDLRequest {
         val platform = Links.platformOf(url) ?: "video"
         val req = baseRequest(context, url, platform)
         req.addOption("--no-mtime")
+        // חיתוך (הפיצ'ר "חיתוך"): אותו דבר כמו download_ranges ב-API של yt-dlp
+        if (startSec >= 0 || endSec > 0) {
+            req.addOption("--download-sections", "*${startSec.coerceAtLeast(0)}-${if (endSec > 0) endSec.toString() else "inf"}")
+        }
         req.addOption("-o", File(outDir, name.replace("%", "%%") + ".%(ext)s").absolutePath)
         if (formatId == "mp3") {
             req.addOption("-f", "bestaudio/best")

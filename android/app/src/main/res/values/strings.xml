@@ -94,6 +94,28 @@
     <string name="lang_system">לפי המכשיר</string>
     <string name="lang_he" translatable="false">עברית</string>
     <string name="lang_en" translatable="false">English</string>
+    <string name="opts_title">פיצ\'רים נוספים</string>
+    <string name="opt_queue">תור הורדות</string>
+    <string name="opt_queue_desc">כמה הורדות ברצף, והתראה אחת עם \"2/5\"</string>
+    <string name="opt_quality">בחירת איכות</string>
+    <string name="opt_quality_desc">בחלון השיתוף: 360 / 720 / 1080 / הכי טוב, עם גודל משוער</string>
+    <string name="opt_trim">חיתוך</string>
+    <string name="opt_trim_desc">להוריד רק קטע מהסרטון (מ-… עד …)</string>
+    <string name="opt_playlist">פלייליסט</string>
+    <string name="opt_playlist_desc">קישור לפלייליסט: בחירת סרטונים והורדה דרך התור</string>
+    <string name="dl_queue_title">%1$d/%2$d · %3$s</string>
+    <string name="q_best">הכי טוב</string>
+    <string name="act_download">הורדה</string>
+    <string name="trim_title">חיתוך (אופציונלי)</string>
+    <string name="trim_from">מ-</string>
+    <string name="trim_to">עד</string>
+    <string name="trim_invalid">זמן לא תקין. פורמט: mm:ss</string>
+    <string name="playlist_title">פלייליסט</string>
+    <string name="playlist_selected">נבחרו %1$d מתוך %2$d</string>
+    <string name="playlist_all">בחר הכול</string>
+    <string name="playlist_none">נקה הכול</string>
+    <string name="playlist_mp4">הורד MP4</string>
+    <string name="playlist_mp3">הורד MP3</string>
     <string name="privacy">מדיניות פרטיות</string>
     <string name="terms">תנאי שימוש</string>
     <string name="licenses">רישיונות וקרדיטים</string>

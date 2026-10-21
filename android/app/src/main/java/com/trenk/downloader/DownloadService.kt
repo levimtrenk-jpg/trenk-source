@@ -33,12 +33,20 @@ import java.util.concurrent.atomic.AtomicInteger
 class DownloadService : Service() {
     private data class Job(
         val id: String, val url: String, val formatId: String, val title: String,
-        val probeId: String?, val uploader: String?,
+        val probeId: String?, val uploader: String?, val startSec: Int = -1, val endSec: Int = -1,
     )
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val queue = Channel<Job>(Channel.UNLIMITED)
     private val pending = AtomicInteger(0)
+    // מונים לתצוגת "2/5" בהתראה (רק כשמתג "תור הורדות" דלוק); מתאפסים כשהתור מתרוקן
+    private val total = AtomicInteger(0)
+    private val finished = AtomicInteger(0)
+
+    private fun ntitle(job: Job): String =
+        if (Options.get(this, Options.QUEUE) && total.get() > 1)
+            getString(R.string.dl_queue_title, finished.get() + 1, total.get(), job.title)
+        else job.title
     private val canceled = Collections.synchronizedSet(mutableSetOf<String>())
     private lateinit var nm: NotificationManager
 
@@ -74,6 +82,8 @@ class DownloadService : Service() {
             title = intent.getStringExtra(EXTRA_TITLE) ?: url,
             probeId = intent.getStringExtra(EXTRA_ID),
             uploader = intent.getStringExtra(EXTRA_UPLOADER),
+            startSec = intent.getIntExtra(EXTRA_START, -1),
+            endSec = intent.getIntExtra(EXTRA_END, -1),
         )
         History.add(
             HistoryItem(
@@ -83,6 +93,7 @@ class DownloadService : Service() {
             )
         )
         pending.incrementAndGet()
+        total.incrementAndGet()
         queue.trySend(job)
         return START_NOT_STICKY
     }
@@ -101,19 +112,19 @@ class DownloadService : Service() {
             if (job.id in canceled) return
             Engine.awaitReady()
             val baseName = Links.cleanFileName(job.title, job.uploader, job.probeId, platform)
-            val request = Engine.downloadRequest(this, job.url, job.formatId, workDir, baseName)
-            nm.notify(PROGRESS_ID, progressNotification(job.title, getString(R.string.dl_downloading), 0f, true))
+            val request = Engine.downloadRequest(this, job.url, job.formatId, workDir, baseName, job.startSec, job.endSec)
+            nm.notify(PROGRESS_ID, progressNotification(ntitle(job), getString(R.string.dl_downloading), 0f, true))
             // נכשל? מעדכנים את המנוע ומנסים שוב פעם אחת ("מתקן... רגע"), ורק אז שגיאה
             val onRepair = {
                 if (job.id in canceled) throw IllegalStateException("canceled")
                 workDir.listFiles()?.forEach { it.deleteRecursively() }
                 History.update(job.id) { it.copy(status = Status.DOWNLOADING, progress = 0f, speed = getString(R.string.repairing)) }
-                nm.notify(PROGRESS_ID, progressNotification(job.title, getString(R.string.repairing), 0f, true))
+                nm.notify(PROGRESS_ID, progressNotification(ntitle(job), getString(R.string.repairing), 0f, true))
             }
             Engine.withRepair(this, platform, onRepair) { execute(job, request) }
 
             History.update(job.id) { it.copy(status = Status.SAVING, progress = 100f, speed = null) }
-            nm.notify(PROGRESS_ID, progressNotification(job.title, getString(R.string.dl_saving), 100f, true))
+            nm.notify(PROGRESS_ID, progressNotification(ntitle(job), getString(R.string.dl_saving), 100f, true))
             val file = workDir.listFiles()
                 ?.filter { it.isFile && !it.name.endsWith(".part") && !it.name.endsWith(".ytdl") }
                 ?.maxByOrNull { it.length() }
@@ -134,7 +145,10 @@ class DownloadService : Service() {
         } finally {
             workDir.deleteRecursively()
             canceled -= job.id
+            finished.incrementAndGet()
             if (pending.decrementAndGet() == 0) {
+                total.set(0)
+                finished.set(0)
                 ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
@@ -152,7 +166,7 @@ class DownloadService : Service() {
             val speed = SPEED_RE.find(line)?.groupValues?.get(1)?.replace("MiB", "MB")?.replace("KiB", "KB")
             History.progress(job.id, p, speed, eta)
             val etaText = if (eta > 0) " · " + getString(R.string.dl_eta, formatEta(eta)) else ""
-            nm.notify(PROGRESS_ID, progressNotification(job.title, "${p.toInt()}%$etaText", p, p <= 0f))
+            nm.notify(PROGRESS_ID, progressNotification(ntitle(job), "${p.toInt()}%$etaText", p, p <= 0f))
         }
     }
 
@@ -225,15 +239,17 @@ class DownloadService : Service() {
         private const val EXTRA_ID = "id"
         private const val EXTRA_UPLOADER = "uploader"
         private const val EXTRA_LABEL = "label"
+        private const val EXTRA_START = "start"
+        private const val EXTRA_END = "end"
         private val SPEED_RE = Regex("""at\s+([\d.]+\s*[KMG]i?B/s)""")
 
-        fun start(context: Context, probe: Probe, option: FormatOption) =
-            startRaw(context, probe.url, option.formatId, probe.title, probe.thumbnail, option.label, probe.id, probe.uploader)
+        fun start(context: Context, probe: Probe, option: FormatOption, startSec: Int = -1, endSec: Int = -1) =
+            startRaw(context, probe.url, option.formatId, probe.title, probe.thumbnail, option.label, probe.id, probe.uploader, startSec, endSec)
 
-        /** גם ל"נסה שוב" מההיסטוריה */
+        /** גם ל"נסה שוב" מההיסטוריה ולפלייליסט */
         fun startRaw(
             context: Context, url: String, formatId: String, title: String?, thumbnail: String?, label: String?,
-            id: String? = null, uploader: String? = null,
+            id: String? = null, uploader: String? = null, startSec: Int = -1, endSec: Int = -1,
         ) {
             val intent = Intent(context, DownloadService::class.java)
                 .putExtra(EXTRA_URL, url)
@@ -243,6 +259,8 @@ class DownloadService : Service() {
                 .putExtra(EXTRA_ID, id)
                 .putExtra(EXTRA_UPLOADER, uploader)
                 .putExtra(EXTRA_LABEL, label)
+                .putExtra(EXTRA_START, startSec)
+                .putExtra(EXTRA_END, endSec)
             ContextCompat.startForegroundService(context, intent)
         }
 

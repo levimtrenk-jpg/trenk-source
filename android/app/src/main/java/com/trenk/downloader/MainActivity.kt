@@ -11,6 +11,7 @@ import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.material3.Switch
 import androidx.core.os.LocaleListCompat
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -624,6 +625,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             AppearanceCard()
+            FeaturesCard()
             ShareTrenkCard()
             LegalCard(onLicenses)
 
@@ -658,6 +660,30 @@ class MainActivity : AppCompatActivity() {
                     if (tags[i].isEmpty()) LocaleListCompat.getEmptyLocaleList() else LocaleListCompat.forLanguageTags(tags[i])
                 )
             }
+        }
+    }
+
+    /** פיצ'רים אופציונליים: כל מתג כבוי כברירת מחדל */
+    @Composable
+    private fun FeaturesCard() {
+        Card {
+            Text(stringResource(R.string.opts_title), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+            FeatureSwitch(Options.QUEUE, R.string.opt_queue, R.string.opt_queue_desc)
+            FeatureSwitch(Options.QUALITY, R.string.opt_quality, R.string.opt_quality_desc)
+            FeatureSwitch(Options.TRIM, R.string.opt_trim, R.string.opt_trim_desc)
+            FeatureSwitch(Options.PLAYLIST, R.string.opt_playlist, R.string.opt_playlist_desc)
+        }
+    }
+
+    @Composable
+    private fun FeatureSwitch(key: String, title: Int, desc: Int) {
+        var on by remember { mutableStateOf(Options.get(this, key)) }
+        Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(title), fontSize = 14.sp)
+                Text(stringResource(desc), fontSize = 12.sp, color = OnSurfaceVar)
+            }
+            Switch(checked = on, onCheckedChange = { on = it; Options.set(this@MainActivity, key, it) })
         }
     }
 

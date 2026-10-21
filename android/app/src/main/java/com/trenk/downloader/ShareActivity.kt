@@ -30,7 +30,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -110,7 +112,15 @@ class ShareActivity : AppCompatActivity() {
         data object Repairing : UiState
         data class Error(val message: String) : UiState
         data class Ready(val probe: Probe) : UiState
-        data class AskNotifications(val probe: Probe, val option: FormatOption) : UiState
+        data class Playlist(val items: List<PlaylistEntry>) : UiState
+        data class AskNotifications(val start: () -> Unit) : UiState
+    }
+
+    /** "1:30" / "1:02:03" / "90" → שניות. null אם לא תקין */
+    private fun parseTime(text: String): Int? {
+        val parts = text.trim().split(":").map { it.trim().toIntOrNull() ?: return null }
+        if (parts.isEmpty() || parts.size > 3 || parts.any { it < 0 }) return null
+        return parts.fold(0) { acc, n -> acc * 60 + n }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -124,10 +134,20 @@ class ShareActivity : AppCompatActivity() {
             state = UiState.Loading
             state = if (url == null) UiState.Error(getString(R.string.share_no_link))
             else try {
-                UiState.Ready(Engine.probe(this@ShareActivity, url) { state = UiState.Repairing })
+                if (Options.get(this@ShareActivity, Options.PLAYLIST) && Engine.isPlaylist(url)) {
+                    val items = Engine.probePlaylist(this@ShareActivity, url) { state = UiState.Repairing }
+                    if (items.isEmpty()) UiState.Error(getString(R.string.err_generic)) else UiState.Playlist(items)
+                } else {
+                    UiState.Ready(Engine.probe(this@ShareActivity, url) { state = UiState.Repairing })
+                }
             } catch (e: Exception) {
                 UiState.Error(e.message ?: getString(R.string.err_unknown))
             }
+        }
+
+        // בהורדה הראשונה מבקשים הרשאת התראות (אחרי הסבר); אחרת מתחילים וסוגרים
+        val begin: (() -> Unit) -> Unit = { start ->
+            if (needsNotificationAsk()) state = UiState.AskNotifications(start) else { start(); onClose() }
         }
 
         ModalBottomSheet(
@@ -149,28 +169,66 @@ class ShareActivity : AppCompatActivity() {
                     UiState.Loading -> Loading()
                     UiState.Repairing -> Loading(stringResource(R.string.repairing))
                     is UiState.Error -> ErrorState(s.message, canRetry = url != null, onRetry = { attempt++ }, onClose = onClose)
-                    is UiState.Ready -> Formats(s.probe) { option ->
-                        if (needsNotificationAsk()) {
-                            state = UiState.AskNotifications(s.probe, option)
-                        } else {
-                            DownloadService.start(this@ShareActivity, s.probe, option)
-                            onClose()
+                    is UiState.Ready -> Formats(s.probe) { option, from, to ->
+                        begin { DownloadService.start(this@ShareActivity, s.probe, option, from, to) }
+                    }
+                    is UiState.Playlist -> PlaylistView(s.items) { picked, mp3 ->
+                        begin {
+                            picked.forEach { e ->
+                                DownloadService.startRaw(
+                                    this@ShareActivity, e.url, if (mp3) "mp3" else "mp4-1080", e.title, e.thumbnail,
+                                    if (mp3) "MP3" else "MP4", e.id,
+                                )
+                            }
                         }
                     }
                     is UiState.AskNotifications -> NotificationsAsk(
                         onAllow = {
                             getSharedPreferences("app", MODE_PRIVATE).edit().putBoolean("notif_asked", true).apply()
-                            afterNotifPermission = { DownloadService.start(this@ShareActivity, s.probe, s.option); onClose() }
+                            afterNotifPermission = { s.start(); onClose() }
                             askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
                         },
                         onSkip = {
                             getSharedPreferences("app", MODE_PRIVATE).edit().putBoolean("notif_asked", true).apply()
-                            DownloadService.start(this@ShareActivity, s.probe, s.option)
+                            s.start()
                             onClose()
                         },
                     )
                 }
             }
+        }
+    }
+
+    /** פלייליסט: רשימה עם תיבות סימון; מה שנבחר נכנס לתור ההורדות (MP4 עד 1080p או MP3) */
+    @Composable
+    private fun ColumnScope.PlaylistView(items: List<PlaylistEntry>, onDownload: (List<PlaylistEntry>, Boolean) -> Unit) {
+        var selected by remember { mutableStateOf(items.map { it.id }.toSet()) }
+        RowCenter(Modifier.fillMaxWidth()) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.playlist_title), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                MutedLabel(stringResource(R.string.playlist_selected, selected.size, items.size))
+            }
+            PillButton(stringResource(if (selected.size == items.size) R.string.playlist_none else R.string.playlist_all), primary = false) {
+                selected = if (selected.size == items.size) emptySet() else items.map { it.id }.toSet()
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        items.forEach { e ->
+            val on = e.id in selected
+            RowCenter(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                    .clickable { selected = if (on) selected - e.id else selected + e.id },
+            ) {
+                Checkbox(checked = on, onCheckedChange = { selected = if (on) selected - e.id else selected + e.id })
+                Text(e.title, Modifier.weight(1f), fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                formatDuration(e.duration)?.let { LtrText(it, modifier = Modifier.padding(start = 8.dp)) }
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        val picked = items.filter { it.id in selected }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
+            PillButton(stringResource(R.string.playlist_mp4), primary = true) { if (picked.isNotEmpty()) onDownload(picked, false) }
+            PillButton(stringResource(R.string.playlist_mp3), primary = false) { if (picked.isNotEmpty()) onDownload(picked, true) }
         }
     }
 
@@ -232,7 +290,30 @@ class ShareActivity : AppCompatActivity() {
     }
 
     @Composable
-    private fun ColumnScope.Formats(probe: Probe, onPick: (FormatOption) -> Unit) {
+    private fun ColumnScope.Formats(probe: Probe, onDownload: (FormatOption, Int, Int) -> Unit) {
+        val trimOn = remember { Options.get(this@ShareActivity, Options.TRIM) }
+        val qualityOn = remember { Options.get(this@ShareActivity, Options.QUALITY) }
+        var from by remember { mutableStateOf("") }
+        var to by remember { mutableStateOf("") }
+        var trimError by remember { mutableStateOf(false) }
+        var preset by remember { mutableIntStateOf(2) }
+
+        // מחזיר רק אם החיתוך תקין (או כבוי); אחרת מציג שגיאה
+        val onPick: (FormatOption) -> Unit = pick@{ option ->
+            var s = -1
+            var e = -1
+            if (trimOn) {
+                val f = parseTime(from)
+                val t = parseTime(to)
+                val bad = (from.isNotBlank() && f == null) || (to.isNotBlank() && t == null) ||
+                    (f != null && t != null && f >= t) || (f != null && probe.duration > 0 && f >= probe.duration)
+                if (bad) { trimError = true; return@pick }
+                trimError = false
+                s = f ?: -1
+                e = if (t != null && probe.duration > 0) minOf(t, probe.duration) else t ?: -1
+            }
+            onDownload(option, s, e)
+        }
         Thumb(
             probe.thumbnail, radius = 16.dp,
             modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
@@ -254,7 +335,50 @@ class ShareActivity : AppCompatActivity() {
             ?: video.filter { (it.quality ?: 0) < 1080 }.maxByOrNull { it.quality ?: 0 }
             ?: video.firstOrNull()
 
-        if (video.isNotEmpty()) {
+        if (trimOn) {
+            MutedLabel(stringResource(R.string.trim_title), Modifier.padding(top = 16.dp, bottom = 8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    from, { from = it; trimError = false }, Modifier.weight(1f), singleLine = true,
+                    label = { Text(stringResource(R.string.trim_from)) }, placeholder = { Text("0:00") },
+                    isError = trimError,
+                )
+                OutlinedTextField(
+                    to, { to = it; trimError = false }, Modifier.weight(1f), singleLine = true,
+                    label = { Text(stringResource(R.string.trim_to)) },
+                    placeholder = { Text(formatDuration(probe.duration) ?: "mm:ss") },
+                    isError = trimError,
+                )
+            }
+            if (trimError) Text(stringResource(R.string.trim_invalid), color = Err, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+        }
+
+        if (video.isNotEmpty() && qualityOn) {
+            // איכות מהירה: 360 / 720 / 1080 / הכי טוב. כל יעד ממופה לאיכות הקרובה שקיימת בסרטון
+            val targets = listOf(360, 720, 1080, 0)
+            val mapped = targets.map { t ->
+                if (t == 0) video.first() else video.filter { (it.quality ?: 0) <= t }.maxByOrNull { it.quality ?: 0 } ?: video.last()
+            }
+            MutedLabel(stringResource(R.string.video), Modifier.padding(top = 16.dp, bottom = 8.dp))
+            Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                targets.forEachIndexed { i, t ->
+                    val label = if (t == 0) stringResource(R.string.q_best) else "${t}p"
+                    val body: @Composable () -> Unit = {
+                        Column(Modifier.fillMaxWidth().clickable { preset = i }.padding(horizontal = 6.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(label, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, maxLines = 1)
+                            LtrText(mapped[i].sizeApprox?.let { "~" + formatBytes(it) } ?: " ")
+                        }
+                    }
+                    Box(Modifier.weight(1f)) {
+                        if (i == preset) GradientBorder(radius = 14.dp) { body() }
+                        else Box(Modifier.clip(RoundedCornerShape(14.dp)).background(Container)) { body() }
+                    }
+                }
+            }
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                PillButton(stringResource(R.string.act_download), primary = true) { onPick(mapped[preset]) }
+            }
+        } else if (video.isNotEmpty()) {
             MutedLabel(stringResource(R.string.video), Modifier.padding(top = 16.dp, bottom = 8.dp))
             video.chunked(2).forEach { pair ->
                 Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
