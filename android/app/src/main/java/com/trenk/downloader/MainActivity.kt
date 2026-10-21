@@ -672,6 +672,7 @@ class MainActivity : AppCompatActivity() {
             FeatureSwitch(Options.QUALITY, R.string.opt_quality, R.string.opt_quality_desc)
             FeatureSwitch(Options.TRIM, R.string.opt_trim, R.string.opt_trim_desc)
             FeatureSwitch(Options.PLAYLIST, R.string.opt_playlist, R.string.opt_playlist_desc)
+            FeatureSwitch(Options.SUBS, R.string.opt_subs, R.string.opt_subs_desc)
         }
     }
 

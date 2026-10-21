@@ -57,6 +57,7 @@ import androidx.core.content.ContextCompat
 import com.trenk.downloader.ui.Bg
 import com.trenk.downloader.ui.ThemeMode
 import com.trenk.downloader.ui.Container
+import com.trenk.downloader.ui.TrenkPink
 import com.trenk.downloader.ui.Err
 import com.trenk.downloader.ui.GradientBorder
 import com.trenk.downloader.ui.LtrText
@@ -111,7 +112,7 @@ class ShareActivity : AppCompatActivity() {
         data object Loading : UiState
         data object Repairing : UiState
         data class Error(val message: String) : UiState
-        data class Ready(val probe: Probe) : UiState
+        data class Ready(val probe: Probe, val subs: List<SubChoice> = emptyList()) : UiState
         data class Playlist(val items: List<PlaylistEntry>) : UiState
         data class AskNotifications(val start: () -> Unit) : UiState
     }
@@ -138,7 +139,9 @@ class ShareActivity : AppCompatActivity() {
                     val items = Engine.probePlaylist(this@ShareActivity, url) { state = UiState.Repairing }
                     if (items.isEmpty()) UiState.Error(getString(R.string.err_generic)) else UiState.Playlist(items)
                 } else {
-                    UiState.Ready(Engine.probe(this@ShareActivity, url) { state = UiState.Repairing })
+                    val probe = Engine.probe(this@ShareActivity, url) { state = UiState.Repairing }
+                    val subs = if (Options.get(this@ShareActivity, Options.SUBS)) Engine.probeSubs(this@ShareActivity, url) else emptyList()
+                    UiState.Ready(probe, subs)
                 }
             } catch (e: Exception) {
                 UiState.Error(e.message ?: getString(R.string.err_unknown))
@@ -169,8 +172,8 @@ class ShareActivity : AppCompatActivity() {
                     UiState.Loading -> Loading()
                     UiState.Repairing -> Loading(stringResource(R.string.repairing))
                     is UiState.Error -> ErrorState(s.message, canRetry = url != null, onRetry = { attempt++ }, onClose = onClose)
-                    is UiState.Ready -> Formats(s.probe) { option, from, to ->
-                        begin { DownloadService.start(this@ShareActivity, s.probe, option, from, to) }
+                    is UiState.Ready -> Formats(s.probe, s.subs) { option, from, to, subLangs ->
+                        begin { DownloadService.start(this@ShareActivity, s.probe, option, from, to, subLangs) }
                     }
                     is UiState.Playlist -> PlaylistView(s.items) { picked, mp3 ->
                         begin {
@@ -290,13 +293,15 @@ class ShareActivity : AppCompatActivity() {
     }
 
     @Composable
-    private fun ColumnScope.Formats(probe: Probe, onDownload: (FormatOption, Int, Int) -> Unit) {
+    private fun ColumnScope.Formats(probe: Probe, subs: List<SubChoice>, onDownload: (FormatOption, Int, Int, String) -> Unit) {
         val trimOn = remember { Options.get(this@ShareActivity, Options.TRIM) }
         val qualityOn = remember { Options.get(this@ShareActivity, Options.QUALITY) }
         var from by remember { mutableStateOf("") }
         var to by remember { mutableStateOf("") }
         var trimError by remember { mutableStateOf(false) }
         var preset by remember { mutableIntStateOf(2) }
+        var subsOn by remember { mutableStateOf(false) }
+        var subIdx by remember { mutableIntStateOf(0) }
 
         // מחזיר רק אם החיתוך תקין (או כבוי); אחרת מציג שגיאה
         val onPick: (FormatOption) -> Unit = pick@{ option ->
@@ -312,7 +317,8 @@ class ShareActivity : AppCompatActivity() {
                 s = f ?: -1
                 e = if (t != null && probe.duration > 0) minOf(t, probe.duration) else t ?: -1
             }
-            onDownload(option, s, e)
+            val langs = if (subsOn && option.formatId != "mp3") subs.getOrNull(subIdx)?.langs.orEmpty() else ""
+            onDownload(option, s, e, langs)
         }
         Thumb(
             probe.thumbnail, radius = 16.dp,
@@ -351,6 +357,25 @@ class ShareActivity : AppCompatActivity() {
                 )
             }
             if (trimError) Text(stringResource(R.string.trim_invalid), color = Err, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+        }
+
+        if (subs.isNotEmpty()) {
+            Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(subsOn, { subsOn = it })
+                Text(stringResource(R.string.subs_title), fontSize = 14.sp, modifier = Modifier.clickable { subsOn = !subsOn })
+            }
+            if (subsOn) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    subs.forEachIndexed { i, c ->
+                        val label = stringResource(when (c.id) { "he" -> R.string.subs_he; "en" -> R.string.subs_en; else -> R.string.subs_auto })
+                        Box(
+                            Modifier.clip(RoundedCornerShape(12.dp))
+                                .background(if (i == subIdx) TrenkPink.copy(alpha = 0.25f) else Container)
+                                .clickable { subIdx = i }.padding(horizontal = 14.dp, vertical = 8.dp),
+                        ) { Text(label, fontSize = 13.sp) }
+                    }
+                }
+            }
         }
 
         if (video.isNotEmpty() && qualityOn) {

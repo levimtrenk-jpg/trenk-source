@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class DownloadService : Service() {
     private data class Job(
         val id: String, val url: String, val formatId: String, val title: String,
-        val probeId: String?, val uploader: String?, val startSec: Int = -1, val endSec: Int = -1,
+        val probeId: String?, val uploader: String?, val startSec: Int = -1, val endSec: Int = -1, val subLangs: String = "",
     )
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -84,6 +84,7 @@ class DownloadService : Service() {
             uploader = intent.getStringExtra(EXTRA_UPLOADER),
             startSec = intent.getIntExtra(EXTRA_START, -1),
             endSec = intent.getIntExtra(EXTRA_END, -1),
+            subLangs = intent.getStringExtra(EXTRA_SUBS).orEmpty(),
         )
         History.add(
             HistoryItem(
@@ -112,7 +113,7 @@ class DownloadService : Service() {
             if (job.id in canceled) return
             Engine.awaitReady()
             val baseName = Links.cleanFileName(job.title, job.uploader, job.probeId, platform)
-            val request = Engine.downloadRequest(this, job.url, job.formatId, workDir, baseName, job.startSec, job.endSec)
+            val request = Engine.downloadRequest(this, job.url, job.formatId, workDir, baseName, job.startSec, job.endSec, job.subLangs)
             nm.notify(PROGRESS_ID, progressNotification(ntitle(job), getString(R.string.dl_downloading), 0f, true))
             // נכשל? מעדכנים את המנוע ומנסים שוב פעם אחת ("מתקן... רגע"), ורק אז שגיאה
             val onRepair = {
@@ -126,11 +127,13 @@ class DownloadService : Service() {
             History.update(job.id) { it.copy(status = Status.SAVING, progress = 100f, speed = null) }
             nm.notify(PROGRESS_ID, progressNotification(ntitle(job), getString(R.string.dl_saving), 100f, true))
             val file = workDir.listFiles()
-                ?.filter { it.isFile && !it.name.endsWith(".part") && !it.name.endsWith(".ytdl") }
+                ?.filter { it.isFile && !it.name.endsWith(".part") && !it.name.endsWith(".ytdl") && !it.name.endsWith(".srt") && !it.name.endsWith(".vtt") }
                 ?.maxByOrNull { it.length() }
                 ?: throw IllegalStateException("download finished without a file")
             val size = file.length()
             val saved = MediaSaver.save(this, file, baseName)
+            // כתוביות ליד הסרטון; כישלון בהן לא מפיל את ההורדה
+            workDir.listFiles()?.filter { it.isFile && it.name.endsWith(".srt") }?.forEach { runCatching { MediaSaver.saveSubtitle(this, it) } }
             History.update(job.id) { it.copy(status = Status.DONE, uri = saved.uri.toString(), mime = saved.mime, sizeBytes = size) }
             doneNotification(job, saved.uri, saved.mime, saved.displayName)
         } catch (e: Throwable) {
@@ -241,15 +244,16 @@ class DownloadService : Service() {
         private const val EXTRA_LABEL = "label"
         private const val EXTRA_START = "start"
         private const val EXTRA_END = "end"
+        private const val EXTRA_SUBS = "subs"
         private val SPEED_RE = Regex("""at\s+([\d.]+\s*[KMG]i?B/s)""")
 
-        fun start(context: Context, probe: Probe, option: FormatOption, startSec: Int = -1, endSec: Int = -1) =
-            startRaw(context, probe.url, option.formatId, probe.title, probe.thumbnail, option.label, probe.id, probe.uploader, startSec, endSec)
+        fun start(context: Context, probe: Probe, option: FormatOption, startSec: Int = -1, endSec: Int = -1, subLangs: String = "") =
+            startRaw(context, probe.url, option.formatId, probe.title, probe.thumbnail, option.label, probe.id, probe.uploader, startSec, endSec, subLangs)
 
         /** גם ל"נסה שוב" מההיסטוריה ולפלייליסט */
         fun startRaw(
             context: Context, url: String, formatId: String, title: String?, thumbnail: String?, label: String?,
-            id: String? = null, uploader: String? = null, startSec: Int = -1, endSec: Int = -1,
+            id: String? = null, uploader: String? = null, startSec: Int = -1, endSec: Int = -1, subLangs: String = "",
         ) {
             val intent = Intent(context, DownloadService::class.java)
                 .putExtra(EXTRA_URL, url)
@@ -261,6 +265,7 @@ class DownloadService : Service() {
                 .putExtra(EXTRA_LABEL, label)
                 .putExtra(EXTRA_START, startSec)
                 .putExtra(EXTRA_END, endSec)
+                .putExtra(EXTRA_SUBS, subLangs)
             ContextCompat.startForegroundService(context, intent)
         }
 

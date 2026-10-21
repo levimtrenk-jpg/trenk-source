@@ -36,6 +36,33 @@ object MediaSaver {
         }
     }
 
+    /** קובץ כתוביות (<שם>.<שפה>.srt) ליד הסרטון: Movies/Downloader. אם המערכת לא מאפשרת שם, ל-Download/Downloader. */
+    fun saveSubtitle(context: Context, source: File) {
+        val name = source.name
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            @Suppress("DEPRECATION")
+            val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES), "Downloader").apply { mkdirs() }
+            source.copyTo(File(dir, name), overwrite = true)
+            return
+        }
+        val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        val resolver = context.contentResolver
+        for (path in listOf("Movies/Downloader", "Download/Downloader")) {
+            val values = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+                put(MediaStore.MediaColumns.MIME_TYPE, "application/x-subrip")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, path)
+            }
+            val uri = runCatching { resolver.insert(collection, values) }.getOrNull() ?: continue
+            try {
+                resolver.openOutputStream(uri)!!.use { out -> source.inputStream().use { it.copyTo(out) } }
+                return
+            } catch (e: Exception) {
+                resolver.delete(uri, null, null)
+            }
+        }
+    }
+
     private fun saveMediaStore(context: Context, source: File, name: String, mime: String, audio: Boolean): Saved {
         val resolver = context.contentResolver
         val collection = if (audio) MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)

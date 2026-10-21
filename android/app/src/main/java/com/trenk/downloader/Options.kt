@@ -8,6 +8,7 @@ object Options {
     const val QUALITY = "opt_quality"
     const val TRIM = "opt_trim"
     const val PLAYLIST = "opt_playlist"
+    const val SUBS = "opt_subs"
 
     fun get(context: Context, key: String): Boolean =
         context.getSharedPreferences("app", Context.MODE_PRIVATE).getBoolean(key, false)

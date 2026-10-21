@@ -103,6 +103,12 @@
     <string name="opt_trim_desc">להוריד רק קטע מהסרטון (מ-… עד …)</string>
     <string name="opt_playlist">פלייליסט</string>
     <string name="opt_playlist_desc">קישור לפלייליסט: בחירת סרטונים והורדה דרך התור</string>
+    <string name="opt_subs">כתוביות</string>
+    <string name="opt_subs_desc">בחלון השיתוף: לשמור כתוביות (SRT) ליד הסרטון, אם יש</string>
+    <string name="subs_title">כתוביות</string>
+    <string name="subs_he">עברית</string>
+    <string name="subs_en">אנגלית</string>
+    <string name="subs_auto">אוטומטיות</string>
     <string name="dl_queue_title">%1$d/%2$d · %3$s</string>
     <string name="q_best">הכי טוב</string>
     <string name="act_download">הורדה</string>

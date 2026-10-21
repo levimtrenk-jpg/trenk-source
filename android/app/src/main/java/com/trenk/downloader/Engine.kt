@@ -35,6 +35,9 @@ data class Probe(
 /** סרטון בפלייליסט (מרשימה שטוחה: בלי איכויות) */
 data class PlaylistEntry(val id: String, val title: String, val url: String, val duration: Int, val thumbnail: String?)
 
+/** כתוביות שזמינות לסרטון: id (he/en/auto) ← ערך ל---sub-langs */
+data class SubChoice(val id: String, val langs: String)
+
 sealed interface EngineState {
     data object Initializing : EngineState
     data class Ready(val version: String?) : EngineState
@@ -100,6 +103,28 @@ object Engine {
             duration = info.duration,
             options = buildOptions(info),
         )
+    }
+
+    /** אילו כתוביות יש לסרטון (עברית / אנגלית / אוטומטיות בשפת המקור). ריק אם אין או אם הבדיקה נכשלה. */
+    suspend fun probeSubs(context: Context, url: String): List<SubChoice> = withContext(Dispatchers.IO) {
+        runCatching {
+            val platform = Links.platformOf(url) ?: return@runCatching emptyList()
+            awaitReady()
+            val req = baseRequest(context, url, platform)
+            req.addOption("--skip-download")
+            req.addOption("--print", "%(subtitles)j")
+            req.addOption("--print", "%(automatic_captions)j")
+            val lines = YoutubeDL.getInstance().execute(req).out.lineSequence().map { it.trim() }.filter { it.startsWith("{") }.toList()
+            fun keys(i: Int): Set<String> = runCatching {
+                val j = org.json.JSONObject(lines[i]); j.keys().asSequence().toSet()
+            }.getOrDefault(emptySet())
+            val all = keys(0) + keys(1)
+            val out = mutableListOf<SubChoice>()
+            if (all.any { it.startsWith("he") || it.startsWith("iw") }) out += SubChoice("he", "he,iw")
+            if (all.any { it == "en" || it.startsWith("en-") }) out += SubChoice("en", "en,en-orig")
+            keys(1).firstOrNull { it.endsWith("-orig") }?.let { out += SubChoice("auto", "$it,${it.removeSuffix("-orig")}") }
+            out
+        }.getOrDefault(emptyList())
     }
 
     /** קישור לפלייליסט עצמו (youtube.com/playlist?list=...). קישור לסרטון בודד נשאר סרטון בודד. */
@@ -174,7 +199,7 @@ object Engine {
     /** בקשת הורדה לתיקייה זמנית. השם הסופי ניתן אחר כך ב-MediaStore. */
     fun downloadRequest(
         context: Context, url: String, formatId: String, outDir: File, name: String,
-        startSec: Int = -1, endSec: Int = -1,
+        startSec: Int = -1, endSec: Int = -1, subLangs: String = "",
     ): YoutubeDLRequest {
         val platform = Links.platformOf(url) ?: "video"
         val req = baseRequest(context, url, platform)
@@ -190,6 +215,13 @@ object Engine {
             req.addOption("--audio-format", "mp3")
             req.addOption("--audio-quality", "192K")
         } else {
+            // כתוביות (הפיצ'ר "כתוביות"): נשמרות ליד הסרטון כ-SRT. ב-MP3 מתעלמים
+            if (subLangs.isNotBlank()) {
+                req.addOption("--write-subs")
+                req.addOption("--write-auto-subs")
+                req.addOption("--sub-langs", subLangs)
+                req.addOption("--convert-subs", "srt")
+            }
             val h = formatId.removePrefix("mp4-").toIntOrNull()
             val fmt = if (h == null) "bv*+ba/b"
             else "bv*[height=$h]+ba/b[height=$h]/bv*[height<=$h]+ba/b[height<=$h]/b"

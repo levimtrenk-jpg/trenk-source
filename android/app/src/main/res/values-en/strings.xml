@@ -94,6 +94,12 @@
     <string name="opt_trim_desc">Download only part of the video (from … to …)</string>
     <string name="opt_playlist">Playlists</string>
     <string name="opt_playlist_desc">Playlist link: pick videos and download them through the queue</string>
+    <string name="opt_subs">Subtitles</string>
+    <string name="opt_subs_desc">In the share sheet: save subtitles (SRT) next to the video, if available</string>
+    <string name="subs_title">Subtitles</string>
+    <string name="subs_he">Hebrew</string>
+    <string name="subs_en">English</string>
+    <string name="subs_auto">Auto-generated</string>
     <string name="dl_queue_title">%1$d/%2$d · %3$s</string>
     <string name="q_best">Best</string>
     <string name="act_download">Download</string>
